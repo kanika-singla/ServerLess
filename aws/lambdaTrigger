@@ -12,14 +12,14 @@ exports.handler = function(event, context, callback) {
    console.log(message);
    const url = `https://${bucket}.s3.amazonaws.com/${filename}`;
   console.log(url)
-  queryDatabase(filename, url);
+  queryDatabase(filename, url, bucket);
   callback(null, message);
 };
 
-function queryDatabase (filename, url) {
+function queryDatabase (filename, url, db_name) {
   MongoClient.connect(MONGODB_URI, function (err, client) {
                 var img_cat = filename.split("-")[1];
-                var db = client.db('lego-products');
+                var db = client.db(db_name);
                   db.collection('images').update({name: filename}, {name: filename, poster: url, category: img_cat}, {upsert: true})
                   .then(() => { return { statusCode: 200, body: 'success' }; })
                   .catch(err => {
