@@ -1,0 +1,219 @@
+<html>
+  <head>
+    <style>
+      body {
+        background-color: #F5F6F7;
+        color: #494747;
+        font-family: Helvetica, sans-serif;
+
+      }
+      a {
+        color: #006CBC;
+      }
+      h1 {
+        font-size: 60pt;
+        font-weight: 200;
+        text-align:center;
+      }
+      h2 {
+        font-size: 24pt;
+        font-weight: 400;
+        text-align:center;
+      }
+      .content{
+        padding-top:40px;
+      }
+
+      .footer {
+        font-size: 14pt;
+        font-weight: 200;
+        text-align:center;
+      }
+      tr {
+        width: 100px;
+        height: 10px;
+      }
+      td {
+        height: 100px;
+
+    background-color: rgb(255, 255, 255);
+    align-content: center;
+    vertical-align: middle;
+
+      }
+
+	  .logo {
+		margin-top: 20px;
+	  }
+    .loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+    }
+    .custom-file-input::-webkit-file-upload-button {
+  visibility: hidden;
+}
+.custom-file-input::before {
+  content: 'Upload File';
+  display: inline-block;
+  background: linear-gradient(top, #f9f9f9, #e3e3e3);
+  border: 1px solid #999;
+  border-radius: 3px;
+  padding: 5px 8px;
+  outline: none;
+  white-space: nowrap;
+  -webkit-user-select: none;
+  cursor: pointer;
+  text-shadow: 1px 1px #fff;
+  font-weight: 700;
+  font-size: 10pt;
+}
+.custom-file-input:hover::before {
+  border-color: black;
+}
+.custom-file-input:active::before {
+  background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+}
+
+
+    </style>
+    <script src="https://unpkg.com/realm-web@0.8.0/dist/bundle.iife.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+    const appId = "imageupload-bhrep"; // Set Realm app ID here.
+    const appConfig = {
+      id: appId,
+      timeout: 1000,
+    };
+    async function run() {
+    //  $('#loader').css("display","block");
+      $('#images').css("display","none");
+      let user;
+      try {
+        const app = new Realm.App(appConfig);
+        const credentials = Realm.Credentials.anonymous(); // create an anonymous credential
+        user = await app.logIn(credentials);
+       
+        const mongo = app.services.mongodb("mongodb-atlas"); // mongodb-atlas is the name of the cluster service
+        const coll = mongo.db("lego-products").collection("images");
+        
+        var e = document.getElementById("img_cat");
+        var selected_category = e.options[e.selectedIndex].value;
+
+        items = await coll.find({category: selected_category}); // find a document where `name` == "test"
+        document.getElementById("LEGO_IMAGES").innerHTML = "";
+        var counter = 0; var flag=0;
+        for (var i = 0; i < items.length; i++) {
+          if(counter == 0) {
+            $("#LEGO_IMAGES").append("<tr>");
+          }
+          $("#LEGO_IMAGES").append("<td><img src='"+items[i]['poster']+"' width=100% ></td>");
+          counter++;
+          if(counter > 2) {
+            $("#LEGO_IMAGES").append("</tr>");
+            counter = 0;
+          }
+        //  console.log(items[1]['poster']); height=100px; width=100px;
+        }
+       //  $('#loader').css("display","none");
+         $('#images').css("display","block");
+     //   $("#LEGO_IMAGES").append("<img src='https://m.media-amazon.com/images/M/MV5BMDdmZGU3NDQtY2E5My00ZTliLWIzOTUtMTY4ZGI1YjdiNjk3XkEyXkFqcGdeQXVyNTA4NzY1MzY@._V1_SY1000_SX677_AL_.jpg' height='64px' width='64px'>");
+       // console.dir(items);
+      } finally {
+        if (user) {
+          user.logOut();
+        }
+      }
+    }
+   // run().catch(console.dir);
+    
+    function previewFile() {
+        const preview = document.querySelector('img');
+        const file = document.querySelector('input[type=file]').files[0];
+        const reader = new FileReader();
+
+        reader.addEventListener("load", function () {
+          // convert image file to base64 string
+          preview.src = reader.result;
+        }.bind(this), false);
+
+        if (file) {
+          reader.readAsDataURL(file);
+        }
+    }
+    function uploadToS3() {
+      console.log("calling uploadToS3");
+      readFile();
+      $(".file-upload-class").hide();
+     // location.reload();
+      //var image_data = document.getElementById("b64").innerHTML; //preview
+     // console.log(image_data);
+  }
+
+     function readFile() {
+
+      const app1 = new Realm.App(appConfig);
+        const credentials1 = Realm.Credentials.anonymous(); // create an anonymous credential
+        user =  app1.logIn(credentials1);
+
+      var file    = document.querySelector('input[type=file]');
+        if (file && file.files[0]) {
+            
+            var FR= new FileReader();
+            
+            FR.addEventListener("load", function(e) {
+              //document.getElementById("img").src       = e.target.result; //preview
+              var file_new = document.querySelector('input[type=file]').files[0];
+              var fileName = file_new["name"];
+              var fileType = file_new["type"];
+              var bucket = 'lego-products';
+              const regex = /data:image\/.*;base64,/gi;
+              var base64Image = e.target.result.replace(regex,"");
+
+               app1.functions.uploadImage(base64Image, bucket, fileName, fileType);
+            }); 
+            
+            FR.readAsDataURL( file.files[0] );
+          }
+    }
+
+    function showHide() {
+      $(".file-upload-class").show();
+    }
+
+</script>
+<title>Image Manager</title>
+
+  </head>
+  <body onload="run()">
+    <div style="text-align: center;  background-color: rgb(255, 207, 0);"><img src="css-images/logo.gif"></div>
+   <!-- <div class="loader" id="loader" style="display:none;"></div>-->
+    <div class="content" id="images">
+      <select id="img_cat" name="category" onchange="run()">
+        <option>ART</option>
+        <option>ARCHITECTURE</option>
+        <option>CITY</option>
+        <option>CLASSIC</option>
+        <option>DISNEY</option>
+        <option>DOTS</option>
+        <option>DUPLO</option>
+        <option>FRIENDS</option>
+        <option>HARRYPOTTER</option>
+        <option>IDEAS</option>
+        <option>STARWARS</option>
+        <option>SUPERHEROS</option>
+        <option>TECHNIC</option>
+      </select>
+      <input type="file" onchange="showHide()" class="custom-file-input"><br><br>
+      <div class="file-upload-class" style="display: none;">
+        <!--<img id="img" src="" height="200" alt="Image preview...">-->
+        <button type="button" onclick="uploadToS3()" value="Upload">Upload</button>
+      </div>
+      <table id="LEGO_IMAGES" border="1px;"></table>
+    </div>
+  </body>
+</html>
+
