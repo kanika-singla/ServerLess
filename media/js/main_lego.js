@@ -13,7 +13,7 @@ const appId = "imageupload-bhrep"; // Set Realm app ID here.
         user = await app.logIn(credentials);
        
         const mongo = app.services.mongodb("mongodb-atlas"); // mongodb-atlas is the name of the cluster service
-        const coll = mongo.db("appdemo-02").collection("images");
+        const coll = mongo.db("appdemo-01").collection("images");
         
         var e = document.getElementById("img_cat");
         var selected_category = e.options[e.selectedIndex].value;
@@ -81,7 +81,7 @@ const appId = "imageupload-bhrep"; // Set Realm app ID here.
               var file_new = document.querySelector('input[type=file]').files[0];
               var fileName = file_new["name"];
               var fileType = file_new["type"];
-              var bucket = 'appdemo-02';
+              var bucket = 'appdemo-01';
               const regex = /data:image\/.*;base64,/gi;
               var base64Image = e.target.result.replace(regex,"");
 
